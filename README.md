@@ -4,7 +4,7 @@ Hi，我是阿里巴巴新商场事业部(银泰)的服务端TL，感谢您参�
 
 我们团队主要负责整个阿里百货业态的升级和线上线下融合，打造未来的商场和购物场景，在会员、交易、营销、供应链、商场数字化经营、基础中间件及HR体系构建等领域都有很大的发展空间。
 
-<font color=#FF000 >[点击下载笔试题](https://mos-interview.oss-cn-shanghai.aliyuncs.com/%E9%93%B6%E6%B3%B0%E5%95%86%E4%B8%9A%E6%8A%80%E6%9C%AF%E9%83%A8%E9%9D%A2%E8%AF%95%E9%A2%98.zip) </font>
+[点击下载笔试题](https://mos-interview.oss-cn-shanghai.aliyuncs.com/%E9%93%B6%E6%B3%B0%E5%95%86%E4%B8%9A%E6%8A%80%E6%9C%AF%E9%83%A8%E9%9D%A2%E8%AF%95%E9%A2%98.zip)
 
 ## __答题要点:__
 
