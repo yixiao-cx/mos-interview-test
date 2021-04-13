@@ -6,6 +6,10 @@ Hi，我是阿里巴巴新商场事业部(银泰)的服务端TL，感谢您参�
 
 [点击下载笔试题](https://mos-interview.oss-cn-shanghai.aliyuncs.com/%E9%93%B6%E6%B3%B0%E5%95%86%E4%B8%9A%E6%8A%80%E6%9C%AF%E9%83%A8%E9%9D%A2%E8%AF%95%E9%A2%98.zip)
 
+[点击下载笔试题](https://mos-interview.oss-cn-shanghai.aliyuncs.com/%E9%93%B6%E6%B3%B0%E5%95%86%E4%B8%9A%E6%8A%80%E6%9C%AF%E9%83%A8%E9%9D%A2%E8%AF%95%E9%A2%98.zip)
+
+[点击下载笔试题](https://mos-interview.oss-cn-shanghai.aliyuncs.com/%E9%93%B6%E6%B3%B0%E5%95%86%E4%B8%9A%E6%8A%80%E6%9C%AF%E9%83%A8%E9%9D%A2%E8%AF%95%E9%A2%98.zip)
+
 ## __答题要点:__
 
 1. 请在com.alibaba.mos.interview.Interview2Tests查看三道笔试题的要求并作答，答题时请注意编码规范和代码注释, 可以自行按照需求修改POM文件或增加接口及实现
