@@ -135,16 +135,16 @@ export class GameEngine {
     
     // Initialize player ship with SVG
     const player = new PIXI.Container();
-    player.name = 'player';
+    player.label = 'player';
     const ship = new PIXI.Sprite(this.shipTexture);
-    ship.name = 'player-ship';
+    ship.label = 'player-ship';
     ship.anchor.set(0.5);
     ship.width = 48;
     ship.height = 48;
     
     // Add glow effect
     const glow = new PIXI.Graphics();
-    glow.name = 'player-glow';
+    glow.label = 'player-glow';
     glow.fill({ color: 0x00ff00, alpha: 0.2 }); // Updated to new PIXI.js syntax
     glow.circle(0, 0, 30);
     
@@ -153,7 +153,7 @@ export class GameEngine {
     
     // Add engine flame effect using particle system
     const engineFlame = this.particleSystem.createEngineFlame(0, 20);
-    engineFlame.name = 'player-engine-flame';
+    engineFlame.label = 'player-engine-flame';
     player.addChild(engineFlame);
     
     player.x = this.app.screen.width / 2;
@@ -168,7 +168,7 @@ export class GameEngine {
     
     // Initialize speed lines container
     this.speedLines = new PIXI.Container();
-    this.speedLines.name = 'speed-lines';
+    this.speedLines.label = 'speed-lines';
     this.app.stage.addChild(this.speedLines);
     this.lastPlayerX = this.player.x;
     
@@ -247,11 +247,11 @@ export class GameEngine {
 
   private createBullet(x: number) {
     const bullet = new PIXI.Container();
-    bullet.name = 'missile';
+    bullet.label = 'missile';
     
     // 使用预加载的导弹SVG
     const missileSprite = new PIXI.Sprite(this.missileTexture);
-    missileSprite.name = 'missile-sprite';
+    missileSprite.label = 'missile-sprite';
     missileSprite.anchor.set(0.5);
     missileSprite.width = 12;
     missileSprite.height = 24;
