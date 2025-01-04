@@ -3,6 +3,9 @@ import * as PIXI from 'pixi.js';
 export class ParticleSystem {
   private app: PIXI.Application;
   private particles: PIXI.Container;
+  private flameParticlePool: PIXI.Graphics[] = [];
+  private explosionParticlePool: PIXI.Graphics[] = [];
+  private rectanglePool: PIXI.Rectangle[] = [];
 
   constructor(app: PIXI.Application) {
     this.app = app;
@@ -12,20 +15,25 @@ export class ParticleSystem {
 
   createEngineFlame(x: number, y: number): PIXI.Container {
     const flame = new PIXI.Container();
-    const particleCount = 15; // Increased particle count for richer effect
+    const particleCount = 8; // Reduced particle count for better performance
     
     // Color range for flame particles
     const colors = [0xff9933, 0xff8833, 0xff6600, 0xff4400];
 
     for (let i = 0; i < particleCount; i++) {
-      const particle = new PIXI.Graphics();
+      let particle: PIXI.Graphics;
+      if (this.flameParticlePool.length > 0) {
+        particle = this.flameParticlePool.pop()!;
+        particle.clear();
+      } else {
+        particle = new PIXI.Graphics();
+      }
       // Randomly select color from palette
       const color = colors[Math.floor(Math.random() * colors.length)];
-      particle.beginFill(color);
+      particle.fill({ color: color });
       // Varied particle sizes
       const size = Math.random() * 2 + 1;
-      particle.drawCircle(0, 0, size);
-      particle.endFill();
+      particle.circle(0, 0, size);
       // Higher alpha range for more vibrant effect
       particle.alpha = Math.random() * 0.6 + 0.4;
       particle.x = x + (Math.random() - 0.5) * 4; // Spread particles horizontally
@@ -55,7 +63,7 @@ export class ParticleSystem {
   }
 
   createExplosion(x: number, y: number, color: number = 0xff0000): void {
-    const particleCount = 30; // Increased particle count
+    const particleCount = 15; // Reduced particle count for performance
     const explosion = new PIXI.Container();
     
     // Dynamic color palette for explosions
@@ -63,9 +71,8 @@ export class ParticleSystem {
     
     // Create initial flash
     const flash = new PIXI.Graphics();
-    flash.beginFill(0xffffff);
-    flash.drawCircle(x, y, 30);
-    flash.endFill();
+    flash.fill({ color: 0xffffff });
+    flash.circle(x, y, 30);
     flash.alpha = 0.8;
     this.particles.addChild(flash);
     
@@ -82,7 +89,13 @@ export class ParticleSystem {
     this.app.ticker.add(fadeFlash);
     
     for (let i = 0; i < particleCount; i++) {
-      const particle = new PIXI.Graphics();
+      let particle: PIXI.Graphics;
+      if (this.explosionParticlePool.length > 0) {
+        particle = this.explosionParticlePool.pop()!;
+        particle.clear();
+      } else {
+        particle = new PIXI.Graphics();
+      }
       // Random color from palette
       const particleColor = colors[Math.floor(Math.random() * colors.length)];
       particle.beginFill(particleColor);
@@ -142,6 +155,11 @@ export class ParticleSystem {
       });
       
       if (allDead) {
+        explosion.children.forEach((particle) => {
+          if (particle instanceof PIXI.Graphics) {
+            this.explosionParticlePool.push(particle);
+          }
+        });
         this.particles.removeChild(explosion);
         this.app.ticker.remove(animate);
       }
@@ -152,13 +170,12 @@ export class ParticleSystem {
 
   createGlow(sprite: PIXI.Sprite, color: number = 0x00ffff): void {
     const glow = new PIXI.Graphics();
-    glow.beginFill(color, 0.3);
-    glow.drawCircle(
+    glow.fill({ color: color, alpha: 0.3 });
+    glow.circle(
       sprite.width / 2,
       sprite.height / 2,
       Math.max(sprite.width, sprite.height) * 0.7
     );
-    glow.endFill();
     glow.alpha = 0.5;
     
     sprite.addChild(glow);

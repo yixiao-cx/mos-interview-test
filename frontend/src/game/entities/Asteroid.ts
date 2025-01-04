@@ -5,21 +5,22 @@ export class Asteroid extends PIXI.Container {
   private rotationSpeed: number;
   public velocity: { x: number; y: number };
   public radius: number;
+  private collisionRect: PIXI.Rectangle;
 
   private app: PIXI.Application;
 
   constructor(app: PIXI.Application) {
     super();
     this.app = app;
+    this.collisionRect = new PIXI.Rectangle(0, 0, 0, 0);
 
     const size = Math.random() * 20 + 20; // 随机大小
     this.radius = size / 2;
 
     // 创建临时纹理，异步加载后更新
     const tempGraphics = new PIXI.Graphics();
-    tempGraphics.beginFill(0x808080);
-    tempGraphics.drawCircle(0, 0, this.radius);
-    tempGraphics.endFill();
+    tempGraphics.fill({ color: 0x808080 });
+    tempGraphics.circle(0, 0, this.radius);
     const tempTexture = app.renderer.generateTexture(tempGraphics);
     this.sprite = new PIXI.Sprite(tempTexture);
     
@@ -52,7 +53,7 @@ export class Asteroid extends PIXI.Container {
 
   private addCracks() {
     const cracks = new PIXI.Graphics();
-    cracks.lineStyle(1, 0x606060);
+    cracks.stroke({ width: 1, color: 0x606060 });
 
     // 添加随机裂缝
     for (let i = 0; i < 3; i++) {
@@ -82,9 +83,8 @@ export class Asteroid extends PIXI.Container {
 
   private addGlow() {
     const glow = new PIXI.Graphics();
-    glow.beginFill(0xff6600, 0.2);
-    glow.drawCircle(0, 0, this.radius * 1.2);
-    glow.endFill();
+    glow.fill({ color: 0xff6600, alpha: 0.2 });
+    glow.circle(0, 0, this.radius * 1.2);
     glow.alpha = 0.5;
     this.addChildAt(glow, 0);
   }
@@ -114,11 +114,10 @@ export class Asteroid extends PIXI.Container {
   }
 
   getCollisionBounds(): PIXI.Rectangle {
-    return new PIXI.Rectangle(
-      this.x - this.radius,
-      this.y - this.radius,
-      this.radius * 2,
-      this.radius * 2
-    );
+    this.collisionRect.x = this.x - this.radius;
+    this.collisionRect.y = this.y - this.radius;
+    this.collisionRect.width = this.radius * 2;
+    this.collisionRect.height = this.radius * 2;
+    return this.collisionRect;
   }
 }
