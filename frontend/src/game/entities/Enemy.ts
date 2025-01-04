@@ -30,8 +30,9 @@ export class Enemy extends PIXI.Container {
     
     // 加载高质量SVG
     this.sprite.texture = PIXI.Texture.from('/assets/ufo.svg');
-    this.sprite.width = 64;
-    this.sprite.height = 40;
+    const dpr = window.devicePixelRatio || 1;
+    this.sprite.width = 64 * dpr;
+    this.sprite.height = 40 * dpr;
     this.sprite.anchor.set(0.5);
     this.addChild(this.sprite);
 

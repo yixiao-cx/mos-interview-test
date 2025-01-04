@@ -56,16 +56,21 @@ export class GameEngine {
 
   private async initialize(containerId: string): Promise<void> {
     // Initialize PIXI Application with high quality settings
+    const dpr = window.devicePixelRatio || 1;
     const app = new PIXI.Application();
     await app.init({
       width: 800,
       height: 600,
       backgroundColor: 0x000000,
       antialias: true,
-      resolution: window.devicePixelRatio || 1,
+      resolution: dpr,
       autoDensity: true,
-      hello: true  // Enable WebGL2 if available
+      hello: true,  // Enable WebGL2 if available
+      powerPreference: 'high-performance'
     });
+    
+    // Scale stage based on DPR for better quality
+    app.stage.scale.set(1 / dpr);
     this.app = app;
 
     const container = document.getElementById(containerId);
