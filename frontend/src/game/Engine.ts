@@ -20,6 +20,16 @@ export class GameEngine {
   private shipTexture!: PIXI.Texture;
   private missileTexture!: PIXI.Texture;
   
+  // Object pools for better performance
+  private bulletPool: PIXI.Container[] = [];
+  private enemyPool: Enemy[] = [];
+  private asteroidPool: Asteroid[] = [];
+  
+  // Frame timing for stable 60 FPS
+  private smoothDelta: number = 1;
+  private readonly smoothFactor: number = 0.1;
+  private readonly maxDeltaTime: number = 2; // Cap at 2x normal speed
+  
   private score: number = 0;
   private level: number = 1;
   private health: number = 100;
@@ -55,9 +65,10 @@ export class GameEngine {
   }
 
   private async initialize(containerId: string): Promise<void> {
-    // Initialize PIXI Application with high quality settings
+    // Initialize PIXI Application with high quality settings and frame rate control
     const dpr = window.devicePixelRatio || 1;
     const app = new PIXI.Application();
+    app.ticker.maxFPS = 60; // Lock to 60 FPS
     await app.init({
       width: 800,
       height: 600,
@@ -220,19 +231,20 @@ export class GameEngine {
     if (this.gameState !== 'playing') return;
 
     const currentTime = Date.now();
-    const deltaTime = this.app.ticker.deltaTime;
+    
+    // Smooth out delta time to prevent jerky movement
+    const rawDelta = Math.min(this.app.ticker.deltaTime, this.maxDeltaTime);
+    this.smoothDelta = this.smoothDelta * (1 - this.smoothFactor) + rawDelta * this.smoothFactor;
+    const deltaTime = this.smoothDelta;
 
-    // Object pools for better performance
-    const bulletPool: PIXI.Container[] = [];
-    const enemyPool: Enemy[] = [];
-    const asteroidPool: Asteroid[] = [];
+    // Use existing object pools for better performance
 
     // 更新子弹位置
     for (let i = this.bullets.children.length - 1; i >= 0; i--) {
       const bullet = this.bullets.children[i];
       bullet.y -= 7 * deltaTime;
       if (bullet.y < -20) {
-        bulletPool.push(this.bullets.removeChild(bullet));
+        this.bulletPool.push(this.bullets.removeChild(bullet));
       }
     }
 
@@ -244,8 +256,8 @@ export class GameEngine {
       // 敌人射击
       if (bulletPosition && enemy.canShoot) {
         let bullet: PIXI.Container;
-        if (bulletPool.length > 0) {
-          const pooledBullet = bulletPool.pop();
+        if (this.bulletPool.length > 0) {
+          const pooledBullet = this.bulletPool.pop();
           if (pooledBullet) {
             bullet = pooledBullet;
             bullet.x = bulletPosition.x;
@@ -260,7 +272,7 @@ export class GameEngine {
       }
 
       if (enemy.y > this.app.screen.height + 50) {
-        enemyPool.push(enemy);
+        this.enemyPool.push(enemy);
         this.app.stage.removeChild(enemy);
         this.enemies.splice(i, 1);
       }
@@ -271,7 +283,7 @@ export class GameEngine {
       const asteroid = this.asteroids[i];
       asteroid.update();
       if (asteroid.y > this.app.screen.height + 50) {
-        asteroidPool.push(asteroid);
+        this.asteroidPool.push(asteroid);
         this.app.stage.removeChild(asteroid);
         this.asteroids.splice(i, 1);
       }
@@ -282,8 +294,8 @@ export class GameEngine {
 
     // 生成新敌人 - 使用对象池
     if (currentTime - this.lastEnemySpawnTime >= this.enemySpawnInterval) {
-      if (enemyPool.length > 0) {
-        const enemy = enemyPool.pop()!;
+      if (this.enemyPool.length > 0) {
+        const enemy = this.enemyPool.pop()!;
         enemy.reset();
         this.enemies.push(enemy);
       } else {
@@ -299,8 +311,8 @@ export class GameEngine {
 
     // 生成新陨石 - 使用对象池
     if (currentTime - this.lastAsteroidSpawnTime >= this.asteroidSpawnInterval) {
-      if (asteroidPool.length > 0) {
-        const asteroid = asteroidPool.pop()!;
+      if (this.asteroidPool.length > 0) {
+        const asteroid = this.asteroidPool.pop()!;
         asteroid.reset();
         this.asteroids.push(asteroid);
       } else {
