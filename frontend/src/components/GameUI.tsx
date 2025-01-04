@@ -84,6 +84,7 @@ export const GameUI: React.FC = () => {
         <div className="absolute top-4 left-4 space-y-2">
           <div className="text-xl">得分: {gameState.score}</div>
           <div className="text-xl">等级: {gameState.level}</div>
+          <div id="fps" className="text-sm opacity-50">FPS: --</div>
           <div className="w-48 h-4 bg-gray-700 rounded">
             <div
               className="h-full bg-red-600 rounded"
