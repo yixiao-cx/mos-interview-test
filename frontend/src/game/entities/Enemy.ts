@@ -20,18 +20,18 @@ export class Enemy extends PIXI.Container {
     this.level = level;
     this.particleSystem = particleSystem;
 
-    // 创建UFO图形
-    const graphics = new PIXI.Graphics();
-    graphics.beginFill(0x00ff00);
-    graphics.lineStyle(2, 0x33ff33);
+    // 创建临时纹理，异步加载后更新
+    const tempGraphics = new PIXI.Graphics();
+    tempGraphics.beginFill(0x00ff00);
+    tempGraphics.drawCircle(0, 0, 20);
+    tempGraphics.endFill();
+    const tempTexture = app.renderer.generateTexture(tempGraphics);
+    this.sprite = new PIXI.Sprite(tempTexture);
     
-    // 绘制UFO主体
-    graphics.drawEllipse(0, 0, 20, 8);
-    graphics.drawCircle(0, -5, 10);
-    
-    // 创建纹理并设置精灵
-    const texture = app.renderer.generateTexture(graphics);
-    this.sprite = new PIXI.Sprite(texture);
+    // 加载SVG
+    this.sprite.texture = PIXI.Texture.from('/src/assets/ufo.svg');
+    this.sprite.width = 64;
+    this.sprite.height = 40;
     this.sprite.anchor.set(0.5);
     this.addChild(this.sprite);
 

@@ -17,6 +17,8 @@ export class GameEngine {
   private bullets!: PIXI.Container;
   private asteroids: Asteroid[] = [];
   private particleSystem!: ParticleSystem;
+  private shipTexture!: PIXI.Texture;
+  private missileTexture!: PIXI.Texture;
   
   private score: number = 0;
   private level: number = 1;
@@ -70,24 +72,16 @@ export class GameEngine {
     }
     container.appendChild(this.app.view);
     
-    // Initialize player ship with visual effects
-    const player = new PIXI.Container();
-    const ship = new PIXI.Graphics();
-    ship.beginFill(0x00ff00);
-    ship.moveTo(0, -20);
-    ship.lineTo(15, 20);
-    ship.lineTo(-15, 20);
-    ship.closePath();
-    ship.endFill();
+    // Load SVG assets
+    this.shipTexture = await PIXI.Texture.from('/src/assets/spaceship.svg');
+    this.missileTexture = await PIXI.Texture.from('/src/assets/missile.svg');
     
-    // Add engine flame effect
-    const engineFlame = new PIXI.Graphics();
-    engineFlame.beginFill(0xff3300);
-    engineFlame.moveTo(-5, 20);
-    engineFlame.lineTo(5, 20);
-    engineFlame.lineTo(0, 30);
-    engineFlame.closePath();
-    engineFlame.endFill();
+    // Initialize player ship with SVG
+    const player = new PIXI.Container();
+    const ship = new PIXI.Sprite(this.shipTexture);
+    ship.anchor.set(0.5);
+    ship.width = 48;
+    ship.height = 48;
     
     // Add glow effect
     const glow = new PIXI.Graphics();
@@ -97,6 +91,9 @@ export class GameEngine {
     
     player.addChild(glow);
     player.addChild(ship);
+    
+    // Add engine flame effect using particle system
+    const engineFlame = this.particleSystem.createEngineFlame(0, 20);
     player.addChild(engineFlame);
     
     player.x = this.app.screen.width / 2;
@@ -198,12 +195,12 @@ export class GameEngine {
   private createBullet(x: number) {
     const bullet = new PIXI.Container();
     
-    // 创建导弹图形
-    const missileGraphics = new PIXI.Graphics();
-    missileGraphics.beginFill(0xf1c40f);
-    missileGraphics.drawRect(-2, -8, 4, 16);
-    missileGraphics.endFill();
-    bullet.addChild(missileGraphics);
+    // 使用预加载的导弹SVG
+    const missileSprite = new PIXI.Sprite(this.missileTexture);
+    missileSprite.anchor.set(0.5);
+    missileSprite.width = 12;
+    missileSprite.height = 24;
+    bullet.addChild(missileSprite);
 
     // 添加导弹尾焰
     const missileFlame = this.particleSystem.createEngineFlame(0, 4);

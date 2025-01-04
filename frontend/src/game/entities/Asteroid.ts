@@ -12,38 +12,22 @@ export class Asteroid extends PIXI.Container {
     super();
     this.app = app;
 
-    // 创建陨石图形
-    const graphics = new PIXI.Graphics();
     const size = Math.random() * 20 + 20; // 随机大小
     this.radius = size / 2;
 
-    // 绘制不规则多边形
-    graphics.beginFill(0x808080);
-    graphics.lineStyle(2, 0x606060);
+    // 创建临时纹理，异步加载后更新
+    const tempGraphics = new PIXI.Graphics();
+    tempGraphics.beginFill(0x808080);
+    tempGraphics.drawCircle(0, 0, this.radius);
+    tempGraphics.endFill();
+    const tempTexture = app.renderer.generateTexture(tempGraphics);
+    this.sprite = new PIXI.Sprite(tempTexture);
     
-    const points: PIXI.Point[] = [];
-    const segments = 8;
-    for (let i = 0; i < segments; i++) {
-      const angle = (i / segments) * Math.PI * 2;
-      const variance = Math.random() * 0.3 + 0.85;
-      const x = Math.cos(angle) * size * variance;
-      const y = Math.sin(angle) * size * variance;
-      points.push(new PIXI.Point(x, y));
-    }
-    
-    if (points.length > 0) {
-      graphics.moveTo(points[0].x, points[0].y);
-      points.forEach(point => {
-        graphics.lineTo(point.x, point.y);
-      });
-      graphics.lineTo(points[0].x, points[0].y);
-    }
-    
-    graphics.endFill();
-
-    // 创建纹理并设置精灵
-    const texture = app.renderer.generateTexture(graphics);
-    this.sprite = new PIXI.Sprite(texture);
+    // 加载SVG
+    const texture = PIXI.Texture.from('/src/assets/asteroid.svg');
+    this.sprite.texture = texture;
+    this.sprite.width = size * 2;
+    this.sprite.height = size * 2;
     this.sprite.anchor.set(0.5);
     this.addChild(this.sprite);
 
