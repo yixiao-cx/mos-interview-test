@@ -28,8 +28,8 @@ export class Enemy extends PIXI.Container {
     const tempTexture = app.renderer.generateTexture(tempGraphics);
     this.sprite = new PIXI.Sprite(tempTexture);
     
-    // 加载SVG
-    this.sprite.texture = PIXI.Texture.from('/src/assets/ufo.svg');
+    // 加载高质量SVG
+    this.sprite.texture = PIXI.Texture.from('/assets/ufo.svg');
     this.sprite.width = 64;
     this.sprite.height = 40;
     this.sprite.anchor.set(0.5);

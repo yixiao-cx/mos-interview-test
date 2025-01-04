@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+  <!-- 陨石主体 -->
+  <path d="M24 4 
+           C28 4 32 8 36 12
+           S44 20 44 24
+           S40 32 36 36
+           S28 44 24 44
+           S16 40 12 36
+           S4 28 4 24
+           S8 16 12 12
+           S20 4 24 4Z" 
+        fill="url(#asteroidGradient)" 
+        stroke="#8b6b4c" 
+        stroke-width="2"/>
+  
+  <!-- 表面裂缝 -->
+  <path d="M16 16 L28 24 M20 12 L32 20" 
+        stroke="#5d4837" 
+        stroke-width="1" 
+        fill="none"/>
+  
+  <!-- 发光效果 -->
+  <circle cx="24" cy="24" r="20" 
+          fill="none" 
+          stroke="#ff6b00" 
+          stroke-width="1" 
+          opacity="0.2">
+    <animate attributeName="opacity"
+             values="0.2;0.1;0.2"
+             dur="1.5s"
+             repeatCount="indefinite"/>
+  </circle>
+  
+  <!-- 渐变定义 -->
+  <defs>
+    <linearGradient id="asteroidGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b6b4c"/>
+      <stop offset="100%" style="stop-color:#5d4837"/>
+    </linearGradient>
+  </defs>
+</svg>

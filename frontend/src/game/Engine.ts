@@ -55,13 +55,15 @@ export class GameEngine {
   }
 
   private async initialize(containerId: string): Promise<void> {
-    // Initialize PIXI Application
+    // Initialize PIXI Application with high quality settings
     const app = new PIXI.Application();
     await app.init({
       width: 800,
       height: 600,
       backgroundColor: 0x000000,
       antialias: true,
+      resolution: window.devicePixelRatio || 1,
+      autoDensity: true,
       hello: true  // Enable WebGL2 if available
     });
     this.app = app;
@@ -72,9 +74,20 @@ export class GameEngine {
     }
     container.appendChild(this.app.view);
     
-    // Load SVG assets
-    this.shipTexture = await PIXI.Texture.from('/src/assets/spaceship.svg');
-    this.missileTexture = await PIXI.Texture.from('/src/assets/missile.svg');
+    // Initialize particle system first
+    this.particleSystem = new ParticleSystem(this.app);
+    
+    // Preload all SVG assets
+    await PIXI.Assets.load([
+      '/assets/spaceship.svg',
+      '/assets/missile.svg',
+      '/assets/ufo.svg',
+      '/assets/asteroid.svg'
+    ]);
+    
+    // Get textures from cache
+    this.shipTexture = PIXI.Texture.from('/assets/spaceship.svg');
+    this.missileTexture = PIXI.Texture.from('/assets/missile.svg');
     
     // Initialize player ship with SVG
     const player = new PIXI.Container();
@@ -85,9 +98,8 @@ export class GameEngine {
     
     // Add glow effect
     const glow = new PIXI.Graphics();
-    glow.beginFill(0x00ff00, 0.2);
-    glow.drawCircle(0, 0, 30);
-    glow.endFill();
+    glow.fill({ color: 0x00ff00, alpha: 0.2 }); // Updated to new PIXI.js syntax
+    glow.circle(0, 0, 30);
     
     player.addChild(glow);
     player.addChild(ship);
@@ -102,46 +114,34 @@ export class GameEngine {
     this.app.stage.addChild(player);
     this.player = player;
     
-    // Initialize game objects
-    this.initializeGame();
+    // Initialize bullets container
+    this.bullets = new PIXI.Container();
+    this.app.stage.addChild(this.bullets);
+    
+    // Set up game loop and keyboard events
+    this.app.ticker.add(() => this.gameLoop());
+    window.addEventListener('keydown', (e) => this.handleKeyPress(e));
   }
 
   private initializeGame(): void {
-    this.player = new PIXI.Container();
-    this.bullets = new PIXI.Container();
-    this.particleSystem = new ParticleSystem(this.app);
-
-    // 创建玩家飞船
-    const playerGraphics = new PIXI.Graphics();
-    playerGraphics.beginFill(0x3498db);
-    playerGraphics.lineStyle(2, 0x2980b9);
-    playerGraphics.moveTo(0, -20);
-    playerGraphics.lineTo(-15, 10);
-    playerGraphics.lineTo(15, 10);
-    playerGraphics.lineTo(0, -20);
-    playerGraphics.endFill();
-
-    const playerSprite = new PIXI.Sprite(this.app.renderer.generateTexture(playerGraphics));
-    playerSprite.anchor.set(0.5);
-    this.player.addChild(playerSprite);
-
-    // 添加引擎尾焰
-    const engineFlame = this.particleSystem.createEngineFlame(0, 15);
-    this.player.addChild(engineFlame);
-
-    // 设置玩家位置
-    this.player.x = this.app.screen.width / 2;
-    this.player.y = this.app.screen.height - 60;
-
-    // 添加到舞台
-    this.app.stage.addChild(this.bullets);
-    this.app.stage.addChild(this.player);
-
-    // 设置游戏循环
-    this.app.ticker.add(() => this.gameLoop());
-
-    // 设置键盘事件监听
-    window.addEventListener('keydown', (e) => this.handleKeyPress(e));
+    // Reset game state
+    this.score = 0;
+    this.level = 1;
+    this.health = 100;
+    this.gameState = 'playing';
+    this.doubleMissileUnlocked = false;
+    this.lastBulletTime = 0;
+    this.enemySpawnInterval = 2000;
+    this.lastEnemySpawnTime = 0;
+    this.asteroidSpawnInterval = 3000;
+    this.lastAsteroidSpawnTime = 0;
+    
+    // Clear existing entities
+    this.enemies.forEach(enemy => this.app.stage.removeChild(enemy));
+    this.enemies = [];
+    while (this.bullets.children.length > 0) {
+      this.bullets.removeChildAt(0);
+    }
   }
 
   private handleKeyPress(e: KeyboardEvent) {
