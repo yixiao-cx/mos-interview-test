@@ -30,6 +30,11 @@ export class GameEngine {
   private readonly smoothFactor: number = 0.1;
   private readonly maxDeltaTime: number = 2; // Cap at 2x normal speed
   
+  // Speed lines effect
+  private speedLines!: PIXI.Container;
+  private lastPlayerX: number = 0;
+  private readonly speedLineCount: number = 8;
+  
   private score: number = 0;
   private level: number = 1;
   private health: number = 100;
@@ -62,6 +67,9 @@ export class GameEngine {
     this.lastEnemySpawnTime = 0;
     this.asteroidSpawnInterval = 3000;
     this.lastAsteroidSpawnTime = 0;
+    
+    // Initialize containers
+    this.speedLines = new PIXI.Container();
   }
 
   private async initialize(containerId: string): Promise<void> {
@@ -133,6 +141,11 @@ export class GameEngine {
     // Initialize bullets container
     this.bullets = new PIXI.Container();
     this.app.stage.addChild(this.bullets);
+    
+    // Initialize speed lines container
+    this.speedLines = new PIXI.Container();
+    this.app.stage.addChild(this.speedLines);
+    this.lastPlayerX = this.player.x;
     
     // Set up game loop and keyboard events
     this.app.ticker.add(() => this.gameLoop());
@@ -227,15 +240,68 @@ export class GameEngine {
     this.bullets.addChild(bullet);
   }
 
+  private frameTimeHistory: number[] = [];
+  private lastFpsUpdate: number = 0;
+  private readonly FPS_UPDATE_INTERVAL: number = 1000; // Update FPS display every second
+
   private gameLoop() {
     if (this.gameState !== 'playing') return;
 
     const currentTime = Date.now();
     
+    // Calculate and monitor FPS
+    this.frameTimeHistory.push(currentTime);
+    
+    // Keep only the last second of frame times
+    while (this.frameTimeHistory[0] < currentTime - 1000) {
+      this.frameTimeHistory.shift();
+    }
+    
+    // Update FPS counter every second
+    if (currentTime - this.lastFpsUpdate >= this.FPS_UPDATE_INTERVAL) {
+      const fps = this.frameTimeHistory.length;
+      console.log(`Current FPS: ${fps}`);
+      this.lastFpsUpdate = currentTime;
+    }
+    
     // Smooth out delta time to prevent jerky movement
     const rawDelta = Math.min(this.app.ticker.deltaTime, this.maxDeltaTime);
     this.smoothDelta = this.smoothDelta * (1 - this.smoothFactor) + rawDelta * this.smoothFactor;
     const deltaTime = this.smoothDelta;
+
+    // Update speed lines effect
+    const movement = Math.abs(this.player.x - this.lastPlayerX);
+    if (movement > 0) {
+      // Create new speed lines when moving
+      const line = new PIXI.Graphics();
+      line.lineStyle(1, 0x4444ff, 0.3);
+      line.moveTo(0, -10);
+      line.lineTo(0, 10);
+      line.x = this.player.x + (Math.random() - 0.5) * 30;
+      line.y = this.player.y;
+      (line as any).alpha = 0.5;
+      (line as any).life = 1.0;
+      this.speedLines.addChild(line);
+    }
+    
+    // Update existing speed lines
+    for (let i = this.speedLines.children.length - 1; i >= 0; i--) {
+      const line = this.speedLines.children[i] as PIXI.Graphics;
+      line.y += 5 * deltaTime;
+      (line as any).life -= 0.02 * deltaTime;
+      line.alpha = (line as any).life;
+      
+      if ((line as any).life <= 0) {
+        this.speedLines.removeChild(line);
+      }
+    }
+    
+    // Limit the number of speed lines
+    while (this.speedLines.children.length > this.speedLineCount) {
+      this.speedLines.removeChildAt(0);
+    }
+    
+    this.lastPlayerX = this.player.x;
 
     // Use existing object pools for better performance
 
