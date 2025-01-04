@@ -33,7 +33,7 @@ export class GameEngine {
   // Speed lines effect
   private speedLines!: PIXI.Container;
   private lastPlayerX: number = 0;
-  private readonly speedLineCount: number = 8;
+  private readonly speedLineCount: number = 4; // Reduced for better performance
   private speedLinePool: PIXI.Graphics[] = [];
   private levelUpTextPool: PIXI.Text[] = [];
   private cachedPlayerBounds: PIXI.Rectangle;
@@ -79,21 +79,26 @@ export class GameEngine {
   }
 
   private async initialize(containerId: string): Promise<void> {
-    // Initialize PIXI Application with high quality settings and frame rate control
-    const dpr = window.devicePixelRatio || 1;
+    // Initialize PIXI Application with optimized performance settings
+    const dpr = Math.min(window.devicePixelRatio || 1, 2); // Cap DPR at 2 for performance
     this.app = new PIXI.Application();
     
-    // Initialize with WebGL2 settings
+    // Initialize with WebGL2 settings optimized for performance
     await this.app.init({
       width: 800,
       height: 600,
       backgroundColor: 0x000000,
-      antialias: true,
+      antialias: false, // Disable antialiasing for better performance
       resolution: dpr,
       autoDensity: true,
-      hello: true,  // Enable WebGL2 if available
-      powerPreference: 'high-performance'
+      hello: true,  // Enable WebGL2
+      powerPreference: 'high-performance',
+      clearBeforeRender: true // Ensure clean rendering each frame
     });
+    
+    // Enable sprite batching
+    this.app.stage.sortableChildren = true;
+    this.app.stage.cullable = true;
 
     // Set FPS limit after initialization
     this.app.ticker.maxFPS = 60; // Lock to 60 FPS
@@ -268,9 +273,14 @@ export class GameEngine {
     this.frameCount++;
     if (currentTime - this.fpsUpdateTime >= this.FPS_UPDATE_INTERVAL) {
       this.currentFps = Math.round((this.frameCount * 1000) / (currentTime - this.fpsUpdateTime));
-      console.log(`Current FPS: ${this.currentFps}`);
       this.frameCount = 0;
       this.fpsUpdateTime = currentTime;
+      
+      // Update FPS display in DOM instead of console
+      const fpsElement = document.getElementById('fps');
+      if (fpsElement) {
+        fpsElement.textContent = `FPS: ${this.currentFps}`;
+      }
     }
     
     // Smooth out delta time to prevent jerky movement
