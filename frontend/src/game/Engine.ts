@@ -111,9 +111,9 @@ export class GameEngine {
       throw new Error('Container element not found');
     }
     
-    // Ensure the view is properly created and added to the container
-    if (this.app.view instanceof HTMLCanvasElement) {
-      container.appendChild(this.app.view);
+    // Ensure the canvas is properly created and added to the container
+    if (this.app.canvas instanceof HTMLCanvasElement) {
+      container.appendChild(this.app.canvas);
     } else {
       throw new Error('Failed to create canvas element');
     }
@@ -262,29 +262,42 @@ export class GameEngine {
   private fpsUpdateTime: number = 0;
   private frameCount: number = 0;
   private currentFps: number = 0;
+  private lastFrameTime: number = 0;
   private readonly FPS_UPDATE_INTERVAL: number = 1000; // Update FPS display every second
 
   private gameLoop() {
     if (this.gameState !== 'playing') return;
 
-    const currentTime = Date.now();
+    const now = Date.now();
+    const frameTime = performance.now();
     
     // Calculate FPS using frame count
     this.frameCount++;
-    if (currentTime - this.fpsUpdateTime >= this.FPS_UPDATE_INTERVAL) {
-      this.currentFps = Math.round((this.frameCount * 1000) / (currentTime - this.fpsUpdateTime));
+    if (now - this.fpsUpdateTime >= this.FPS_UPDATE_INTERVAL) {
+      this.currentFps = Math.round((this.frameCount * 1000) / (now - this.fpsUpdateTime));
       this.frameCount = 0;
-      this.fpsUpdateTime = currentTime;
+      this.fpsUpdateTime = now;
       
-      // Update FPS display in DOM instead of console
+      // Update game state in DOM
       const fpsElement = document.getElementById('fps');
-      if (fpsElement) {
-        fpsElement.textContent = `FPS: ${this.currentFps}`;
-      }
+      const scoreElement = document.querySelector('[data-testid="score"]');
+      const levelElement = document.querySelector('[data-testid="level"]');
+      
+      if (fpsElement) fpsElement.textContent = `FPS: ${this.currentFps}`;
+      if (scoreElement) scoreElement.textContent = `得分: ${this.score}`;
+      if (levelElement) levelElement.textContent = `等级: ${this.level}`;
     }
     
+    // Optimize frame timing for 60 FPS target
+    const targetFPS = 60;
+    const targetFrameTime = 1000 / targetFPS;
+    const rawDelta = Math.min(
+      (frameTime - (this.lastFrameTime || frameTime)) / targetFrameTime,
+      this.maxDeltaTime
+    );
+    this.lastFrameTime = frameTime;
+    
     // Smooth out delta time to prevent jerky movement
-    const rawDelta = Math.min(this.app.ticker.deltaTime, this.maxDeltaTime);
     this.smoothDelta = this.smoothDelta * (1 - this.smoothFactor) + rawDelta * this.smoothFactor;
     const deltaTime = this.smoothDelta;
 
@@ -342,7 +355,7 @@ export class GameEngine {
     // 更新敌人
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       const enemy = this.enemies[i];
-      const bulletPosition = enemy.update(currentTime);
+      const bulletPosition = enemy.update(now);
       
       // 敌人射击
       if (bulletPosition && enemy.canShoot) {
@@ -384,7 +397,7 @@ export class GameEngine {
     this.checkCollisions();
 
     // 生成新敌人 - 使用对象池
-    if (currentTime - this.lastEnemySpawnTime >= this.enemySpawnInterval) {
+    if (now - this.lastEnemySpawnTime >= this.enemySpawnInterval) {
       if (this.enemyPool.length > 0) {
         const enemy = this.enemyPool.pop()!;
         enemy.reset();
@@ -392,7 +405,7 @@ export class GameEngine {
       } else {
         this.generateEnemy();
       }
-      this.lastEnemySpawnTime = currentTime;
+      this.lastEnemySpawnTime = now;
 
       // 4级以上增加敌人密度
       if (this.level >= 4 && Math.random() < 0.5) {
@@ -401,7 +414,7 @@ export class GameEngine {
     }
 
     // 生成新陨石 - 使用对象池
-    if (currentTime - this.lastAsteroidSpawnTime >= this.asteroidSpawnInterval) {
+    if (now - this.lastAsteroidSpawnTime >= this.asteroidSpawnInterval) {
       if (this.asteroidPool.length > 0) {
         const asteroid = this.asteroidPool.pop()!;
         asteroid.reset();
@@ -409,7 +422,7 @@ export class GameEngine {
       } else {
         this.generateAsteroid();
       }
-      this.lastAsteroidSpawnTime = currentTime;
+      this.lastAsteroidSpawnTime = now;
     }
   }
 
@@ -436,30 +449,44 @@ export class GameEngine {
     this.cachedPlayerBounds.width = 30;
     this.cachedPlayerBounds.height = 30;
 
-    // Batch process collisions by spatial regions
-    const regions: { [key: string]: Array<PIXI.Container> } = {};
+    // Use pre-allocated arrays for better performance
+    const bulletCount = this.bullets.children.length;
+    const bulletArray = this.bullets.children;
+    const enemyCount = this.enemies.length;
+    const enemyArray = this.enemies;
     
-    // Group objects by grid cells (simple spatial partitioning)
-    const cellSize = 100; // Size of each grid cell
+    // Pre-calculate grid cells for better performance
+    const cellSize = 200; // Increased cell size for fewer checks
     
-    // Helper function to get cell key
-    const getCellKey = (x: number, y: number) => `${Math.floor(x/cellSize)},${Math.floor(y/cellSize)}`;
+    // Use typed arrays for better performance
+    const bulletCells = new Int32Array(bulletCount * 2);
+    const bulletIndices = new Int32Array(bulletCount);
     
-    // Group bullets by cells
-    for (let i = this.bullets.children.length - 1; i >= 0; i--) {
-      const bullet = this.bullets.children[i];
-      const key = getCellKey(bullet.x, bullet.y);
-      if (!regions[key]) regions[key] = [];
-      regions[key].push(bullet);
+    // Pre-calculate bullet positions
+    for (let i = 0; i < bulletCount; i++) {
+      const bullet = bulletArray[i];
+      const gridX = Math.floor(bullet.x / cellSize);
+      const gridY = Math.floor(bullet.y / cellSize);
+      bulletCells[i * 2] = gridX;
+      bulletCells[i * 2 + 1] = gridY;
+      bulletIndices[i] = i;
     }
 
-    // Check enemy collisions only in relevant cells
-    for (let j = this.enemies.length - 1; j >= 0; j--) {
-      const enemy = this.enemies[j];
-      const key = getCellKey(enemy.x, enemy.y);
+    // Check enemy collisions using optimized grid
+    for (let j = enemyCount - 1; j >= 0; j--) {
+      const enemy = enemyArray[j];
+      const enemyGridX = Math.floor(enemy.x / cellSize);
+      const enemyGridY = Math.floor(enemy.y / cellSize);
       
-      if (regions[key]) {
-        for (const bullet of regions[key]) {
+      // Check nearby cells only
+      for (let i = 0; i < bulletCount; i++) {
+        const bulletGridX = bulletCells[i * 2];
+        const bulletGridY = bulletCells[i * 2 + 1];
+        
+        // Quick grid-based rejection test
+        if (Math.abs(bulletGridX - enemyGridX) <= 1 && 
+            Math.abs(bulletGridY - enemyGridY) <= 1) {
+          const bullet = bulletArray[bulletIndices[i]];
           this.cachedBulletBounds.x = bullet.x - 2;
           this.cachedBulletBounds.y = bullet.y - 8;
           this.cachedBulletBounds.width = 4;
@@ -582,5 +609,9 @@ export class GameEngine {
       health: this.health,
       state: this.gameState
     };
+  }
+
+  public getCurrentFps(): number {
+    return this.currentFps;
   }
 }
