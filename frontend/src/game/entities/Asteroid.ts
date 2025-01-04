@@ -25,7 +25,7 @@ export class Asteroid extends PIXI.Container {
     this.sprite = new PIXI.Sprite(tempTexture);
     
     // 加载高质量SVG
-    const texture = PIXI.Texture.from('/assets/asteroid.svg');
+    const texture = PIXI.Texture.from('./assets/asteroid.svg');
     this.sprite.texture = texture;
     const dpr = window.devicePixelRatio || 1;
     this.sprite.width = size * 2 * dpr;

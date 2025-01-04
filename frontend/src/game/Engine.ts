@@ -33,7 +33,7 @@ export class GameEngine {
   // Speed lines effect
   private speedLines!: PIXI.Container;
   private lastPlayerX: number = 0;
-  private readonly speedLineCount: number = 4; // Reduced for better performance
+  private readonly speedLineCount: number = 2; // Further reduced for better performance
   private speedLinePool: PIXI.Graphics[] = [];
   private levelUpTextPool: PIXI.Text[] = [];
   private cachedPlayerBounds: PIXI.Rectangle;
@@ -123,25 +123,28 @@ export class GameEngine {
     
     // Preload all SVG assets
     await PIXI.Assets.load([
-      '/assets/spaceship.svg',
-      '/assets/missile.svg',
-      '/assets/ufo.svg',
-      '/assets/asteroid.svg'
+      './assets/spaceship.svg',
+      './assets/missile.svg',
+      './assets/ufo.svg',
+      './assets/asteroid.svg'
     ]);
     
     // Get textures from cache
-    this.shipTexture = PIXI.Texture.from('/assets/spaceship.svg');
-    this.missileTexture = PIXI.Texture.from('/assets/missile.svg');
+    this.shipTexture = PIXI.Texture.from('./assets/spaceship.svg');
+    this.missileTexture = PIXI.Texture.from('./assets/missile.svg');
     
     // Initialize player ship with SVG
     const player = new PIXI.Container();
+    player.name = 'player';
     const ship = new PIXI.Sprite(this.shipTexture);
+    ship.name = 'player-ship';
     ship.anchor.set(0.5);
     ship.width = 48;
     ship.height = 48;
     
     // Add glow effect
     const glow = new PIXI.Graphics();
+    glow.name = 'player-glow';
     glow.fill({ color: 0x00ff00, alpha: 0.2 }); // Updated to new PIXI.js syntax
     glow.circle(0, 0, 30);
     
@@ -150,6 +153,7 @@ export class GameEngine {
     
     // Add engine flame effect using particle system
     const engineFlame = this.particleSystem.createEngineFlame(0, 20);
+    engineFlame.name = 'player-engine-flame';
     player.addChild(engineFlame);
     
     player.x = this.app.screen.width / 2;
@@ -164,6 +168,7 @@ export class GameEngine {
     
     // Initialize speed lines container
     this.speedLines = new PIXI.Container();
+    this.speedLines.name = 'speed-lines';
     this.app.stage.addChild(this.speedLines);
     this.lastPlayerX = this.player.x;
     
@@ -242,9 +247,11 @@ export class GameEngine {
 
   private createBullet(x: number) {
     const bullet = new PIXI.Container();
+    bullet.name = 'missile';
     
     // 使用预加载的导弹SVG
     const missileSprite = new PIXI.Sprite(this.missileTexture);
+    missileSprite.name = 'missile-sprite';
     missileSprite.anchor.set(0.5);
     missileSprite.width = 12;
     missileSprite.height = 24;
@@ -252,6 +259,7 @@ export class GameEngine {
 
     // 添加导弹尾焰
     const missileFlame = this.particleSystem.createEngineFlame(0, 4);
+    missileFlame.name = 'missile-flame';
     bullet.addChild(missileFlame);
 
     bullet.x = x;
@@ -259,11 +267,13 @@ export class GameEngine {
     this.bullets.addChild(bullet);
   }
 
-  private fpsUpdateTime: number = 0;
   private frameCount: number = 0;
-  private currentFps: number = 0;
+  private fpsUpdateTime: number = Date.now();
+  private currentFps: number = 60;
   private lastFrameTime: number = 0;
-  private readonly FPS_UPDATE_INTERVAL: number = 1000; // Update FPS display every second
+  private readonly FPS_UPDATE_INTERVAL: number = 1000; // Update FPS every second
+  private lastDomUpdateTime: number = 0;
+  private readonly DOM_UPDATE_INTERVAL: number = 100; // Update DOM every 100ms
 
   private gameLoop() {
     if (this.gameState !== 'playing') return;
@@ -277,15 +287,20 @@ export class GameEngine {
       this.currentFps = Math.round((this.frameCount * 1000) / (now - this.fpsUpdateTime));
       this.frameCount = 0;
       this.fpsUpdateTime = now;
-      
-      // Update game state in DOM
-      const fpsElement = document.getElementById('fps');
-      const scoreElement = document.querySelector('[data-testid="score"]');
-      const levelElement = document.querySelector('[data-testid="level"]');
-      
-      if (fpsElement) fpsElement.textContent = `FPS: ${this.currentFps}`;
-      if (scoreElement) scoreElement.textContent = `得分: ${this.score}`;
-      if (levelElement) levelElement.textContent = `等级: ${this.level}`;
+    }
+    
+    // Update DOM less frequently
+    if (now - this.lastDomUpdateTime >= this.DOM_UPDATE_INTERVAL) {
+      requestAnimationFrame(() => {
+        const fpsElement = document.getElementById('fps');
+        const scoreElement = document.querySelector('[data-testid="score"]');
+        const levelElement = document.querySelector('[data-testid="level"]');
+        
+        if (fpsElement) fpsElement.textContent = `FPS: ${this.currentFps}`;
+        if (scoreElement) scoreElement.textContent = `得分: ${this.score}`;
+        if (levelElement) levelElement.textContent = `等级: ${this.level}`;
+      });
+      this.lastDomUpdateTime = now;
     }
     
     // Optimize frame timing for 60 FPS target

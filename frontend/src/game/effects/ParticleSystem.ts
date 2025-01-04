@@ -15,7 +15,7 @@ export class ParticleSystem {
 
   createEngineFlame(x: number, y: number): PIXI.Container {
     const flame = new PIXI.Container();
-    const particleCount = 8; // Optimized count for performance
+    const particleCount = 4; // Reduced for better performance
     
     // Enhanced color range for flame particles
     const colors = [0xffff00, 0xff6600, 0xff2200];
