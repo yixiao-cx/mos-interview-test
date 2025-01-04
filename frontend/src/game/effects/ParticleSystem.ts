@@ -63,7 +63,7 @@ export class ParticleSystem {
   }
 
   createExplosion(x: number, y: number, color: number = 0xff0000): void {
-    const particleCount = 8; // Further reduced particle count for better performance
+    const particleCount = 6; // Balanced between performance and visual quality
     const explosion = new PIXI.Container();
     
     // Dynamic color palette for explosions
@@ -232,7 +232,7 @@ export class ParticleSystem {
 
   createSpeedLines(sprite: PIXI.Sprite): void {
     const speedLines = new PIXI.Container();
-    const lineCount = 8;
+    const lineCount = 6; // Reduced for better performance while maintaining visual quality
     
     for (let i = 0; i < lineCount; i++) {
       let line: PIXI.Graphics;
