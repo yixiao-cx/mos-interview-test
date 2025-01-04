@@ -98,17 +98,16 @@ export class ParticleSystem {
       }
       // Random color from palette
       const particleColor = colors[Math.floor(Math.random() * colors.length)];
-      particle.beginFill(particleColor);
-      
       // Varied particle shapes
       if (Math.random() < 0.3) {
         // Sparks
-        particle.drawRect(-1, -4, 2, 8);
+        particle.fill({ color: particleColor });
+        particle.rect(-1, -4, 2, 8);
       } else {
         // Circles with varied sizes
-        particle.drawCircle(0, 0, Math.random() * 4 + 2);
+        particle.fill({ color: particleColor });
+        particle.circle(0, 0, Math.random() * 4 + 2);
       }
-      particle.endFill();
       
       const angle = (Math.PI * 2 * i) / particleCount + (Math.random() - 0.5) * 0.5;
       const speed = Math.random() * 5 + 3;

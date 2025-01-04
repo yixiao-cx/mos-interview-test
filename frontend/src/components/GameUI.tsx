@@ -82,9 +82,9 @@ export const GameUI: React.FC = () => {
       {/* 游戏界面 */}
       {gameState.state === 'playing' && (
         <div className="absolute top-4 left-4 space-y-2">
-          <div className="text-xl">得分: {gameState.score}</div>
-          <div className="text-xl">等级: {gameState.level}</div>
-          <div id="fps" className="text-sm opacity-50">FPS: --</div>
+          <div data-testid="score" className="text-xl">得分: {gameState.score}</div>
+          <div data-testid="level" className="text-xl">等级: {gameState.level}</div>
+          <div data-testid="fps" id="fps" className="text-sm opacity-50">FPS: {gameEngine?.getCurrentFps() || '--'}</div>
           <div className="w-48 h-4 bg-gray-700 rounded">
             <div
               className="h-full bg-red-600 rounded"

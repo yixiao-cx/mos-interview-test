@@ -22,9 +22,8 @@ export class Enemy extends PIXI.Container {
 
     // 创建临时纹理，异步加载后更新
     const tempGraphics = new PIXI.Graphics();
-    tempGraphics.beginFill(0x00ff00);
-    tempGraphics.drawCircle(0, 0, 20);
-    tempGraphics.endFill();
+    tempGraphics.fill({ color: 0x00ff00 });
+    tempGraphics.circle(0, 0, 20);
     const tempTexture = app.renderer.generateTexture(tempGraphics);
     this.sprite = new PIXI.Sprite(tempTexture);
     
@@ -66,19 +65,17 @@ export class Enemy extends PIXI.Container {
   private addVisualEffects(app: PIXI.Application) {
     // 添加护盾效果
     const shield = new PIXI.Graphics();
-    shield.beginFill(0x33ff33, 0.2);
-    shield.drawCircle(0, 0, 25);
-    shield.endFill();
+    shield.fill({ color: 0x33ff33, alpha: 0.2 });
+    shield.circle(0, 0, 25);
     this.addChild(shield);
 
     // 添加扫描光束效果
     const scanBeam = new PIXI.Graphics();
-    scanBeam.beginFill(0x33ff33, 0.3);
+    scanBeam.fill({ color: 0x33ff33, alpha: 0.3 });
     scanBeam.moveTo(-5, 5);
     scanBeam.lineTo(5, 5);
     scanBeam.lineTo(0, 30);
     scanBeam.lineTo(-5, 5);
-    scanBeam.endFill();
     scanBeam.alpha = 0;
     this.addChild(scanBeam);
 
